@@ -1,31 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Yoha 재고 자동 분배 도구</title>
+  <script src="script.js" defer></script>
 </head>
 <body>
   <h1>📦 Yoha님의 재고 자동 분배 도구</h1>
   <input type="file" id="fileInput" multiple />
   <button onclick="handleFiles()">업로드하고 분배하기</button>
   <div id="result"></div>
-
-<script>
-function handleFiles() {
-  const input = document.getElementById('fileInput');
-  const files = input.files;
-  if (!files.length) {
-    alert('파일을 선택하세요.');
-    return;
-  }
-
-  let resultDiv = document.getElementById('result');
-  resultDiv.innerHTML = '<p>파일이 업로드되었습니다. (여기에 분배 로직 추가 예정)</p>';
-
-  // TODO: 실제 분배 로직 추가 가능 (파일 읽기, 매칭, 수량 분배 등)
-}
-</script>
-
 </body>
 </html>
