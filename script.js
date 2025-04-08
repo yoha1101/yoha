@@ -1,68 +1,108 @@
 function handleFiles() {
   const input = document.getElementById('fileInput');
-  const files = input.files;
-  if (!files.length) {
+  const file = input.files[0];
+  if (!file) {
     alert('파일을 선택하세요.');
     return;
   }
 
-  const file = files[0];
   const reader = new FileReader();
-
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     const content = e.target.result;
-    const lines = content.split("\\n").filter(line => line.trim() !== "");
+    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
 
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = "<p>파일 읽기 완료! 이제 다운로드 파일을 선택하세요.</p>";
+    const products = lines.map(line => {
+      const [code, name, size, qty] = line.split(',');
+      return { code, name, size, qty: parseInt(qty) };
+    });
 
-    createDownloadButtons(lines);
+    const divided = divideQuantities(products);
+    createDownloadButtons(divided);
   };
 
-  if (file.name.endsWith('.csv')) {
-    reader.readAsText(file);
-  } else {
-    alert('CSV 파일만 지원합니다.');
-  }
+  reader.readAsText(file);
 }
 
-function createDownloadButtons(lines) {
-  const resultDiv = document.getElementById('result');
+function divideQuantities(products) {
+  const divided = {
+    shopify: [],
+    lavender: [],
+    musinsa: []
+  };
 
-  const platforms = ["Shopify", "Lavender Vera", "Musinsa"];
-  platforms.forEach(platform => {
-    const btn = document.createElement("button");
-    btn.innerText = platform + " 다운로드";
-    btn.style.margin = "10px";
-    btn.onclick = function() {
-      downloadFile(platform, lines);
-    };
-    resultDiv.appendChild(btn);
+  products.forEach(p => {
+    let qty = p.qty;
+    let shopify = 0, lavender = 0, musinsa = 0;
+
+    if (qty <= 3) {
+      shopify = qty;
+    } else if (qty === 4) {
+      shopify = 3;
+      lavender = 1;
+    } else if (qty === 5) {
+      shopify = 3;
+      lavender = 1;
+      musinsa = 1;
+    } else {
+      shopify = 3;
+      lavender = 2;
+      musinsa = 1;
+      qty -= 6;
+      shopify += qty;
+    }
+
+    divided.shopify.push({ ...p, qty: shopify });
+    divided.lavender.push({ ...p, qty: lavender });
+    divided.musinsa.push({ ...p, qty: musinsa });
   });
+
+  return divided;
 }
 
-function downloadFile(platform, lines) {
-  let headers = "";
-  let processedData = [];
+function createDownloadButtons(divided) {
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = "";
 
-  if (platform === "Shopify") {
-    headers = "Handle,Title,Option1 Name,Option1 Value,Option2 Name,Option2 Value,SKU,HS Code,COO,On hand,Published";
-    processedData = lines.map(line => line + ",10");  // 가상의 재고수 10개 입력
-  } else if (platform === "Lavender Vera") {
-    headers = "상품명,품목병,규격,재고수량";
-    processedData = lines.map(line => line + ",10");
-  } else if (platform === "Musinsa") {
-    headers = "스타일 넘버,상품명,옵션,판매가능 재고";
-    processedData = lines.map(line => line + ",10");
-  }
+  createButton('Shopify 다운로드', formatShopify(divided.shopify), 'shopify.csv', resultDiv);
+  createButton('Lavender Vera 다운로드', formatLavender(divided.lavender), 'lavender.csv', resultDiv);
+  createButton('Musinsa 다운로드', formatMusinsa(divided.musinsa), 'musinsa.csv', resultDiv);
+}
 
-  const csvContent = headers + "\\n" + processedData.join("\\n");
+function createButton(label, content, filename, parent) {
+  const btn = document.createElement('button');
+  btn.innerText = label;
+  btn.style.margin = '10px';
+  btn.onclick = function () {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  parent.appendChild(btn);
+}
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = platform + "_YOHA_재고분배.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+function formatShopify(data) {
+  const header = "Handle,Title,Option1 Name,Option1 Value,Option2 Name,Option2 Value,SKU,HS Code,COO,On hand,Published";
+  return header + "\n" + data.map(p => {
+    return [
+      p.code, p.name, "Color", p.size, "Size", p.size, p.code, "", "", p.qty, "TRUE"
+    ].join(',');
+  }).join('\n');
+}
+
+function formatLavender(data) {
+  const header = "상품명,품목병,규격,재고수량";
+  return header + "\n" + data.map(p => {
+    return [p.name, p.code, p.size, p.qty].join(',');
+  }).join('\n');
+}
+
+function formatMusinsa(data) {
+  const header = "스타일 넘버,상품명,옵션,판매가능 재고";
+  return header + "\n" + data.map(p => {
+    return [p.code, p.name, p.size, p.qty].join(',');
+  }).join('\n');
 }
