@@ -1,5 +1,4 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
-<script>
 function handleFiles() {
   const input = document.getElementById('fileInput');
   const file = input.files[0];
