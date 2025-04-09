@@ -102,4 +102,3 @@ function formatMusinsa(data) {
     "판매가능 재고": p.qty
   }));
 }
-</script>
