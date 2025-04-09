@@ -11,9 +11,9 @@ function handleFiles() {
   const reader = new FileReader();
   reader.onload = function (e) {
     const content = e.target.result;
-    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+    const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line);
 
-    const products = lines.map(line => {
+    const products = lines.slice(1).map(line => {
       const [code, name, size, qty] = line.split(',');
       return { code, name, size, qty: parseInt(qty) };
     });
@@ -37,11 +37,13 @@ function divideQuantities(products) {
     } else if (qty === 5) {
       shopify = 3; lavender = 1; musinsa = 1;
     } else {
-      shopify = 3; lavender = 2; musinsa = 1; qty -= 6; shopify += qty;
+      shopify = 3; lavender = 2; musinsa = 1;
+      qty -= 6;
+      if (qty > 0) shopify += qty;
     }
-    divided.shopify.push({ ...p, qty: shopify });
-    divided.lavender.push({ ...p, qty: lavender });
-    divided.musinsa.push({ ...p, qty: musinsa });
+    if (shopify > 0) divided.shopify.push({ ...p, qty: shopify });
+    if (lavender > 0) divided.lavender.push({ ...p, qty: lavender });
+    if (musinsa > 0) divided.musinsa.push({ ...p, qty: musinsa });
   });
   return divided;
 }
