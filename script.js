@@ -14,9 +14,10 @@ function handleFiles() {
     const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line);
 
     const products = lines.slice(1).map(line => {
-      const [code, name, size, qty] = line.split(',');
-      return { code, name, size, qty: parseInt(qty) };
-    });
+      const [code, name, size, qtyStr] = line.split(',');
+      const qty = parseInt(qtyStr.trim());
+      return { code: code.trim(), name: name.trim(), size: size.trim(), qty: isNaN(qty) ? 0 : qty };
+    }).filter(p => p.qty > 0);  // 수량 0이면 제외
 
     const divided = divideQuantities(products);
     createDownloadButtons(divided);
@@ -37,8 +38,7 @@ function divideQuantities(products) {
     } else if (qty === 5) {
       shopify = 3; lavender = 1; musinsa = 1;
     } else {
-      shopify = 3; lavender = 2; musinsa = 1;
-      qty -= 6;
+      shopify = 3; lavender = 2; musinsa = 1; qty -= 6;
       if (qty > 0) shopify += qty;
     }
     if (shopify > 0) divided.shopify.push({ ...p, qty: shopify });
